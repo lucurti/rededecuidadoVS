@@ -46,6 +46,7 @@
   tr:last-child td { border-bottom:none; }
   td.aluno { font-weight:700; color:var(--navy); }
   td.num { color:#B9C2D1; width:28px; font-variant-numeric:tabular-nums; }
+  .dupla { color:#FF7A1A; font-weight:700; font-size:13px; }
   footer { text-align:center; font-size:12px; color:#8795AB; margin-top:36px; }
   footer b { color:var(--orange); }
   @media (max-width:480px){ h1{font-size:25px} }
@@ -89,6 +90,19 @@ const ROLE_ICON = {Padrinho:"ti-heart",JP:"ti-scale",Terapeuta:"ti-stethoscope",
 function badge(txt,cor){ const c = RAMP[cor]||RAMP.gray; return '<span class="badge" style="background:'+c.bg+';color:'+(c.hd==='#F5A300'?'#8a5a00':c.hd)+'">'+txt+'</span>'; }
 function personRow(p){ const t = p.turma ? p.turma : p.papel; return '<div class="row" onclick="selectPerson(\''+p.nome.replace(/'/g,"\\'")+'\')"><span>'+p.nome+'</span>'+badge(t,p.cor)+'</div>'; }
 function renderList(items){ document.getElementById('list').innerHTML = items.slice(0,8).map(personRow).join(''); }
+function duplaTxt(p,c){
+  const al = DATA.find(x=>x.nome===c.nome && x.turma===c.turma);
+  if(!al) return '';
+  if(al.papel==='QT'){
+    const par = c.papel_do_vinculo==='Terapeuta' ? ['Orientador','orientador'] : c.papel_do_vinculo==='Orientador' ? ['Terapeuta','terapeuta'] : null;
+    if(!par) return '';
+    const o = al.cuidadores.filter(x=>x[0]===par[0] && x[1]!==p.nome).map(x=>x[1]);
+    return o.length ? ' <span class="dupla">('+par[1]+': '+o.join(' e ')+')</span>' : '';
+  }
+  const outros = al.cuidadores.filter(x=>x[0]===c.papel_do_vinculo && x[1]!==p.nome).map(x=>x[1]);
+  if(!outros.length) return '';
+  return ' <span class="dupla">(dupla com '+outros.join(' e ')+')</span>';
+}
 function roleLine(papel,nome){
   const icon = ROLE_ICON[papel]||'ti-user';
   return '<div class="link-line"><i class="ti '+icon+'"></i><span class="link-role">'+papel+'</span><span class="link-name">'+nome+'</span></div>';
@@ -100,7 +114,7 @@ function renderCard(p){
   html += '<div class="card-head"><p class="card-name">'+p.nome+'</p>'+badge(turmaTxt,p.cor)+'</div>';
   html += '<p class="card-role">'+p.papel+'</p>';
   if(p.cuidadores.length){ html += '<p class="section-label">quem cuida de '+p.nome.split(' ')[0]+'</p>'; html += p.cuidadores.map(c=>roleLine(c[0],c[1])).join(''); }
-  if(p.cuidados.length){ html += '<p class="section-label">quem '+p.nome.split(' ')[0]+' cuida</p>'; html += p.cuidados.map(c=>roleLine(c.papel_do_vinculo,c.nome+' ('+c.turma+')')).join(''); }
+  if(p.cuidados.length){ html += '<p class="section-label">quem '+p.nome.split(' ')[0]+' cuida</p>'; html += p.cuidados.map(c=>roleLine(c.papel_do_vinculo,c.nome+' ('+c.turma+')'+duplaTxt(p,c))).join(''); }
   if(!p.cuidadores.length && !p.cuidados.length){ html += '<p class="empty">nenhum vínculo registrado ainda</p>'; }
   html += '</div>';
   document.getElementById('card').innerHTML = html;
